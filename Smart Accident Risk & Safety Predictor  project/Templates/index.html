@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accident Survival Prediction</title>
+
+  <!-- ✅ FIX: CSS styles were completely missing — added here -->
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px;
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 28px;
+      color: #f1f5f9;
+      letter-spacing: -0.5px;
+    }
+
+    .card {
+      background: #1e2130;
+      border: 1px solid #2d3148;
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+
+    input[type="number"], select {
+      width: 100%;
+      background: #111827;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      color: #e2e8f0;
+      padding: 10px 14px;
+      font-size: 15px;
+      transition: border-color 0.2s;
+    }
+
+    input[type="number"]:focus, select:focus {
+      outline: none;
+      border-color: #6366f1;
+    }
+
+    select option { background: #111827; }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      letter-spacing: 0.5px;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover { opacity: 0.9; }
+
+    /* ✅ FIX: Result box now has visible styling */
+    .result-box {
+      margin-top: 28px;
+      padding: 24px;
+      background: #111827;
+      border-radius: 14px;
+      border: 1px solid #2d3148;
+    }
+
+    .result-box h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #cbd5e1;
+    }
+
+    .outcome {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      display: inline-block;
+    }
+
+    .outcome.survived     { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+    .outcome.not-survived { background: rgba(239,68,68,0.12);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+
+    /* ✅ FIX: .low .medium .high now actually styled */
+    .risk-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .risk-badge.low    { background: rgba(34,197,94,0.15);  color: #4ade80; border: 1px solid rgba(34,197,94,0.4); }
+    .risk-badge.medium { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.4); }
+    .risk-badge.high   { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.4); }
+
+    .risk-icon.low    { font-size: 16px; content: "🟢"; }
+    .risk-icon.medium { font-size: 16px; content: "🟡"; }
+    .risk-icon.high   { font-size: 16px; content: "🔴"; }
+
+    .alert-text {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    /* Probability gauge */
+    .gauge-label {
+      font-size: 12px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+
+    .gauge-track {
+      background: #1f2937;
+      border-radius: 6px;
+      height: 10px;
+      overflow: hidden;
+    }
+
+    .gauge-fill {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 0.6s ease;
+    }
+
+    .gauge-fill.low    { background: #22c55e; }
+    .gauge-fill.medium { background: #f59e0b; }
+    .gauge-fill.high   { background: #ef4444; }
+
+    .gauge-value {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    /* Error box */
+    .error-box {
+      margin-top: 20px;
+      padding: 14px;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 10px;
+      color: #f87171;
+      font-size: 14px;
+    }
+
+    @media (max-width: 480px) {
+      .card { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🚗 Accident Survival Predictor</h1>
+
+  <div class="card">
+    <form action="/predict" method="post">
+
+      <div class="field">
+        <label>Age</label>
+        <input type="number" name="age" min="1" max="100" placeholder="e.g. 28" required>
+      </div>
+
+      <div class="field">
+        <label>Gender</label>
+        <select name="gender">
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Speed of Impact (km/h)</label>
+        <input type="number" name="speed" min="0" max="300" placeholder="e.g. 75" required>
+      </div>
+      <div class="field">
+        <label>Vehicle Type</label>
+        <select name="vehicle" id="vehicle" onchange="toggleSafetyOptions()">
+          <option value="Car">Car</option>
+          <option value="Bike">Bike</option>
+        </select>
+      </div>
+
+      <div class="field" id="helmetField">
+        <label>Helmet Used</label>
+        <select name="helmet" id="helmet">
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select>
+      </div>
+
+      <div class="field" id="seatbeltField">
+        <label>Seatbelt Used</label>
+        <select name="seatbelt" id="seatbelt">
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn">⚡ Predict Survival</button>
+    </form>
+
+    <!-- ✅ FIX: risk_class passed from Flask, used correctly here -->
+    {% if prediction %}
+    <div class="result-box">
+
+      <h3>Prediction Outcome</h3>
+      <div class="outcome {{ 'survived' if prediction == 'Survived' else 'not-survived' }}">
+        {{ '✓ ' if prediction == 'Survived' else '✗ ' }}{{ prediction }}
+      </div>
+
+      <h3>Risk Level</h3>
+      <!-- ✅ FIX: using risk_class from Flask instead of comparing emoji strings -->
+      <div class="risk-badge {{ risk_class }}">
+        {% if risk_class == 'low' %}🟢{% elif risk_class == 'medium' %}🟡{% else %}🔴{% endif %}
+        {{ risk }}
+      </div>
+
+      <p class="alert-text">{{ alert }}</p>
+
+      {% if prob is defined %}
+      <p class="gauge-label">Survival Probability</p>
+      <div class="gauge-track">
+        <div class="gauge-fill {{ risk_class }}" style="width: {{ prob }}%"></div>
+      </div>
+      <p class="gauge-value">{{ prob }}%</p>
+      {% endif %}
+
+    </div>
+    {% endif %}
+    {% if reasons %}
+    <div class="result-box">
+      <h3>⚠️ Why This Result?</h3>
+      <ul>
+        {% for r in reasons %}
+          <li>{{ r }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if suggestions %}
+    <div class="result-box">
+      <h3>💡 Safety Suggestions</h3>
+      <ul>
+        {% for s in suggestions %}
+          <li>{{ s }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="error-box">⚠️ Error: {{ error }}</div>
+    {% endif %}
+
+  </div>
+  <script>
+  function toggleSafetyOptions() {
+    const vehicle = document.getElementById("vehicle").value;
+
+    const helmetField = document.getElementById("helmetField");
+    const seatbeltField = document.getElementById("seatbeltField");
+
+    const helmet = document.getElementById("helmet");
+    const seatbelt = document.getElementById("seatbelt");
+
+    if (vehicle === "Car") {
+      seatbelt.disabled = false;
+      helmet.disabled = true;
+
+      helmet.value = "No";
+
+      helmetField.style.opacity = "0.5";
+      seatbeltField.style.opacity = "1";
+    } 
+    else if (vehicle === "Bike") {
+      helmet.disabled = false;
+      seatbelt.disabled = true;
+
+      seatbelt.value = "No";
+
+      seatbeltField.style.opacity = "0.5";
+      helmetField.style.opacity = "1";
+    }
+  }
+
+// Run on page load
+window.onload = toggleSafetyOptions;
+</script>
+
+</body>
+</html>
